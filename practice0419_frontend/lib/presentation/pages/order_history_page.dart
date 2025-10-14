@@ -22,18 +22,18 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
 
   Future<List<dynamic>> fetchOrders() async {
     final accessToken = await AuthService.getAccessToken();
-    
+
     if (accessToken == null) {
       throw Exception('未登入');
     }
 
     final url = Uri.parse('http://127.0.0.1:8000/api/orders');
-    
+
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
         final currentToken = await AuthService.getAccessToken();
         if (currentToken == null) {
-          throw Exception('認證令牌無效');
+          throw Exception('認證 Token 無效');
         }
 
         final response = await http.get(
@@ -43,41 +43,41 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             'Authorization': 'Bearer $currentToken',
           },
         );
-
         if (response.statusCode == 200) {
           final data = json.decode(response.body);
           if (data is List) {
             return List<dynamic>.from(data);
-          } else if (data is Map && data['success'] == true) {
+          } else if (data is Map && data.containsKey('data')) {
+            // Handle response format: {"message":"訂單列表取得成功","data":[...]}
             return List<dynamic>.from(data['data'] ?? []);
           } else {
-            throw Exception(data['message'] ?? data['error'] ?? '獲取訂單失敗');
+            throw Exception(data['message'] ?? '獲取訂單失敗');
           }
         } else if (response.statusCode == 401 && attempt == 0) {
           final refreshed = await AuthService.refreshToken();
           if (!refreshed) {
-            throw Exception('認證令牌無效');
+            throw Exception('認證 Token 無效');
           }
           continue;
         } else {
           try {
             final errorData = json.decode(response.body);
-            throw Exception(errorData['error'] ?? errorData['message'] ?? '獲取訂單失敗');
+            throw Exception(
+              errorData['error'] ?? errorData['message'] ?? '獲取訂單失敗',
+            );
           } catch (jsonError) {
-            throw Exception('獲取訂單失敗: HTTP ');
+            throw Exception('獲取訂單失敗: HTTP ${response.statusCode}');
           }
         }
       } catch (e) {
-        if (attempt == 1) {
-          if (e.toString().contains('認證令牌無效')) {
-            rethrow;
-          }
-          throw Exception('網路連線錯誤，請檢查網路狀態');
+        if (attempt == 1 || e.toString().contains('認證')) {
+          rethrow;
         }
+        // Continue to next attempt for network errors
       }
     }
-    
-    throw Exception('獲取訂單失敗');
+
+    throw Exception('網路連線錯誤，請檢查網路狀態');
   }
 
   void showCancelDialog(BuildContext context, int orderId) {
@@ -113,7 +113,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         try {
           final accessToken = await AuthService.getAccessToken();
           if (accessToken == null) {
-            throw Exception('認證令牌無效');
+            throw Exception('認證 Token 無效');
           }
 
           final response = await http.delete(
@@ -129,13 +129,16 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
             setState(() {
               _ordersFuture = fetchOrders();
             });
-            if(!mounted) return;
-            MessageService.showMessage(context, responseData['message'] ?? '訂單取消成功');
+            if (!mounted) return;
+            MessageService.showMessage(
+              context,
+              responseData['message'] ?? '訂單取消成功',
+            );
             return;
           } else if (response.statusCode == 401 && attempt == 0) {
             final refreshed = await AuthService.refreshToken();
             if (!refreshed) {
-              throw Exception('認證令牌無效');
+              throw Exception('認證 Token 無效');
             }
             continue;
           } else {
@@ -149,15 +152,15 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
         }
       }
     } catch (e) {
-      if (e.toString().contains('認證令牌無效')) {
-        if(!mounted) return;
-        MessageService.showMessage(context, '認證令牌無效，請重新登入');
+      if (e.toString().contains('認證 Token 無效')) {
+        if (!mounted) return;
+        MessageService.showMessage(context, '認證 Token 無效，請重新登入');
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
-        if(!mounted) return;
+        if (!mounted) return;
         MessageService.showMessage(context, '取消訂單失敗: ');
       }
     }
@@ -204,7 +207,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     Text(
                       "請檢查網路連線狀態後重試",
                       style: TextStyle(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                         fontSize: 14,
                       ),
                       textAlign: TextAlign.center,
@@ -237,7 +242,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.7,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -245,22 +252,30 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                       "開始購物來建立您的第一筆訂單吧！",
                       style: TextStyle(
                         fontSize: 16,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 24),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => const HomePage()),
-                        );
-                      },
-                      icon: const Icon(Icons.shopping_cart),
-                      label: const Text('開始購物'),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    SizedBox(
+                      width: 200,
+                      child: TextButton.icon(
+                        onPressed: () {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HomePage(),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('開始購物'),
+                        style: TextButton.styleFrom(
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          foregroundColor: theme.colorScheme.onPrimaryContainer,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -285,13 +300,17 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
               itemBuilder: (context, index) {
                 final order = orders[index];
                 final orderId = order['id'];
-                final createdAt = DateTime.parse(order['created_at'].toString()).toLocal();
-                final formatted = DateFormat('yyyy/MM/dd HH:mm').format(createdAt);
+                final createdAt =
+                    DateTime.parse(order['created_at'].toString()).toLocal();
+                final formatted = DateFormat(
+                  'yyyy/MM/dd HH:mm',
+                ).format(createdAt);
                 final items = order['items'] as List<dynamic>;
 
                 double total = 0;
                 for (var item in items) {
-                  total += double.parse(item['product_price']) * item['quantity'];
+                  total +=
+                      double.parse(item['product_price']) * item['quantity'];
                 }
 
                 return Card(
@@ -308,15 +327,16 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                     subtitle: Text("建立時間 $formatted"),
                     children: [
                       Column(
-                        children: items.map((item) {
-                          return ListTile(
-                            title: Text(item['product_name']),
-                            subtitle: Text("數量: ${item['quantity']}"),
-                            trailing: Text(
-                              "\$${(double.parse(item['product_price']) * item['quantity']).toStringAsFixed(2)}",
-                            ),
-                          );
-                        }).toList(),
+                        children:
+                            items.map((item) {
+                              return ListTile(
+                                title: Text(item['product_name']),
+                                subtitle: Text("數量: ${item['quantity']}"),
+                                trailing: Text(
+                                  "\$${(double.parse(item['product_price']) * item['quantity']).toStringAsFixed(2)}",
+                                ),
+                              );
+                            }).toList(),
                       ),
                       const Divider(),
                       Padding(

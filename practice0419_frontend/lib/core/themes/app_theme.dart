@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+
   static const _appBarTheme = AppBarTheme(
-    backgroundColor: Color(0xffecc45a),
-    foregroundColor: Colors.black,
-    iconTheme: IconThemeData(color: Colors.black),
     titleTextStyle: TextStyle(
       color: Colors.black,
       fontSize: 20,

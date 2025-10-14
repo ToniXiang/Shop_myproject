@@ -182,18 +182,19 @@ class DownOperations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElevatedButton(
           onPressed: onPlaceOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-          child: const Text("提交訂單", style: TextStyle(color: Colors.white)),
+          child: Text("提交訂單", style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
         ),
         ElevatedButton(
           onPressed: onRemoveOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-          child: const Text("清除訂單", style: TextStyle(color: Colors.white)),
+          child: Text("清除訂單", style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
         ),
       ],
     );

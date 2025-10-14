@@ -124,13 +124,13 @@ class SettingsPageState extends State<SettingsPage> {
 
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: const Text('設定')),
+        appBar: AppBar(title: Text('設定',style: TextStyle(color: theme.colorScheme.onSurface))),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text('設定')),
+      appBar: AppBar(title: Text('設定',style: TextStyle(color: theme.colorScheme.onSurface))),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [

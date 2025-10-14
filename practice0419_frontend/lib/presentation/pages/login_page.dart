@@ -78,12 +78,12 @@ class _LoginPageState extends State<LoginPage> {
           isLoading = false;
         });
         if (mounted) {
-          MessageService.showMessage(context, "登入失敗：缺少必要的身份驗證資料");
+          MessageService.showMessage(context, "缺少必要的身份驗證資料");
         }
       }
     } catch (e) {
       if (mounted) {
-        MessageService.showMessage(context, '登入錯誤: $e');
+        MessageService.showMessage(context, '$e');
       }
       setState(() {
         isLoading = false;
@@ -143,7 +143,6 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('登入畫面')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(

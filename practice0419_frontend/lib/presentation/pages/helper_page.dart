@@ -13,7 +13,7 @@ class HelperPage extends StatelessWidget {
     ];
 
     return Scaffold(
-      appBar: AppBar(title: const Text("幫助中心")),
+      appBar: AppBar(title: Text("幫助中心", style: TextStyle(color: theme.colorScheme.onSurface))),
       body: ListView.separated(
         itemCount: faqs.length,
         separatorBuilder: (context, index) => const Divider(height: 0),
