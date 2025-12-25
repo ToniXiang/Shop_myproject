@@ -3,8 +3,8 @@ import 'package:provider/provider.dart';
 import 'package:practice0419_frontend/core/core.dart';
 import 'package:flutter/foundation.dart';
 import 'package:bitsdojo_window/bitsdojo_window.dart';
-
 import 'dart:io';
+
 void setupWindow() {
   if (!kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS)) {
     WidgetsFlutterBinding.ensureInitialized();
