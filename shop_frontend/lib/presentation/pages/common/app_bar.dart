@@ -14,37 +14,55 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return AppBar(
-      // Minimal / modern style: transparent background, low elevation
-      backgroundColor: Colors.transparent,
-      iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
-      foregroundColor: theme.colorScheme.onSurface,
-      elevation: 0,
-      centerTitle: false,
-      title: Text(
-        '資工購物平台',
-        style: TextStyle(
-          color: theme.colorScheme.onSurface,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+    return Stack(
+      children: [
+        // 頂部小區域背景覆蓋
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Container(
+            height: MediaQuery.of(context).padding.top, // 狀態欄高度
+            color: Colors.blueAccent,
+          ),
         ),
-      ),
-      actions: [
-        IconButton(
-          tooltip: '搜尋',
-          icon: Icon(Icons.search, color: theme.colorScheme.onSurface),
-          onPressed: () {
-            MessageService.showMessage(context, '搜尋功能尚未實作');
-          },
+        AppBar(
+          backgroundColor: Colors.transparent,
+          iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
+          foregroundColor: theme.colorScheme.onSurface,
+          elevation: 0,
+          centerTitle: false,
+          title: Text(
+            'scie 購物平台',
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          actions: [
+            IconButton(
+              tooltip: '搜尋',
+              icon: Icon(Icons.search, color: theme.colorScheme.onSurface),
+              onPressed: () {
+                MessageService.showMessage(context, '搜尋功能尚未實作');
+              },
+            ),
+            IconButton(
+              tooltip: '購物車',
+              icon: Icon(
+                Icons.shopping_cart_outlined,
+                color: theme.colorScheme.onSurface,
+              ),
+              onPressed: () {
+                MessageService.showMessage(context, '購物車功能尚未實作');
+              },
+            ),
+            const SizedBox(width: 8),
+          ],
+          toolbarHeight: 44, // 減少工具欄高度
+          titleSpacing: 12, // 減少標題間距
         ),
-        IconButton(
-          tooltip: '購物車',
-          icon: Icon(Icons.shopping_cart_outlined, color: theme.colorScheme.onSurface),
-          onPressed: () {
-            MessageService.showMessage(context, '購物車功能尚未實作');
-          },
-        ),
-        const SizedBox(width: 8),
       ],
     );
   }

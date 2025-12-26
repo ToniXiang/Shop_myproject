@@ -5,8 +5,10 @@ enum AppThemeMode { light, dark, system }
 
 class ThemeProvider extends ChangeNotifier {
   AppThemeMode _themeMode = AppThemeMode.system;
+  bool _isInitialized = false;
 
   AppThemeMode get themeMode => _themeMode;
+  bool get isInitialized => _isInitialized;
 
   ThemeMode get currentThemeMode {
     switch (_themeMode) {
@@ -44,9 +46,12 @@ class ThemeProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final themeIndex = prefs.getInt('theme_mode') ?? 2;
       _themeMode = AppThemeMode.values[themeIndex];
+      _isInitialized = true;
       notifyListeners();
     } catch (e) {
       _themeMode = AppThemeMode.system;
+      _isInitialized = true;
+      notifyListeners();
     }
   }
 

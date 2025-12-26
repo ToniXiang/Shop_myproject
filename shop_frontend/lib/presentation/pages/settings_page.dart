@@ -107,10 +107,6 @@ class SettingsPageState extends State<SettingsPage> {
     }
   }
 
-  void _logout() {
-    MessageService.showLogoutDialog(context);
-  }
-
   @override
   void initState() {
     super.initState();
@@ -124,13 +120,20 @@ class SettingsPageState extends State<SettingsPage> {
 
     if (isLoading) {
       return Scaffold(
-        appBar: AppBar(title: Text('設定',style: TextStyle(color: theme.colorScheme.onSurface))),
+        appBar: AppBar(
+          title: Text(
+            '設定',
+            style: TextStyle(color: theme.colorScheme.onSurface),
+          ),
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(title: Text('設定',style: TextStyle(color: theme.colorScheme.onSurface))),
+      appBar: AppBar(
+        title: Text('設定', style: TextStyle(color: theme.colorScheme.onSurface)),
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -144,9 +147,7 @@ class SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     '用戶資訊',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   if (userInfo != null) ...[
@@ -173,20 +174,18 @@ class SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     'Token 管理',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    child: TextButton.icon(
+                    child: ElevatedButton(
                       onPressed: _refreshToken,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('手動刷新 Token'),
-                      style: TextButton.styleFrom(
-                        side: BorderSide(color: theme.colorScheme.primary),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
                       ),
+                      child: const Text('手動刷新 Token'),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -213,9 +212,7 @@ class SettingsPageState extends State<SettingsPage> {
                 children: [
                   Text(
                     '密碼管理',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 16),
                   _PasswordInput(
@@ -235,24 +232,27 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 12),
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
+                      Expanded(
+                        child: _PasswordInput(
+                          context: context,
+                          labelText: '驗證碼',
+                          hintText: '輸入驗證碼',
+                          icon: Icon(Icons.verified_user_outlined),
+                          controller: verificationCodeController,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
                       TextButton(
                         onPressed: getVerificationCode,
                         style: ElevatedButton.styleFrom(
-                          side: BorderSide(color: theme.colorScheme.primary),
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
                         ),
                         child: const Text("獲取驗證碼"),
                       ),
                     ],
-                  ),
-                  const SizedBox(height: 12),
-                  _PasswordInput(
-                    context: context,
-                    labelText: '驗證碼',
-                    hintText: '輸入驗證碼',
-                    icon: Icon(Icons.verified_user_outlined),
-                    controller: verificationCodeController,
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
@@ -260,7 +260,8 @@ class SettingsPageState extends State<SettingsPage> {
                     child: TextButton(
                       onPressed: changePassword,
                       style: TextButton.styleFrom(
-                        side: BorderSide(color: theme.colorScheme.primary),
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
                       ),
                       child: const Text("更改密碼"),
                     ),
@@ -278,7 +279,6 @@ class SettingsPageState extends State<SettingsPage> {
               child: Column(
                 children: [
                   const ListTile(
-                    leading: Icon(Icons.palette),
                     title: Text(
                       '主題',
                       style: TextStyle(
@@ -293,6 +293,7 @@ class SettingsPageState extends State<SettingsPage> {
                       ChoiceChip(
                         label: const Text("淺色"),
                         selected: themeName == "淺色模式",
+                        selectedColor: Colors.blueAccent,
                         onSelected: (_) {
                           Provider.of<ThemeProvider>(
                             context,
@@ -304,6 +305,7 @@ class SettingsPageState extends State<SettingsPage> {
                       ChoiceChip(
                         label: const Text("深色"),
                         selected: themeName == "深色模式",
+                        selectedColor: Colors.blueAccent,
                         onSelected: (_) {
                           Provider.of<ThemeProvider>(
                             context,
@@ -315,6 +317,7 @@ class SettingsPageState extends State<SettingsPage> {
                       ChoiceChip(
                         label: const Text("系統"),
                         selected: themeName == "系統預設",
+                        selectedColor: Colors.blueAccent,
                         onSelected: (_) {
                           Provider.of<ThemeProvider>(
                             context,
@@ -342,8 +345,7 @@ class SettingsPageState extends State<SettingsPage> {
                     title: const Text('GitHub 儲存庫'),
                     trailing: const Icon(Icons.open_in_new),
                     onTap: () async {
-                      const url =
-                          'https://github.com/ChenGuoXiang940/SC2_myproject';
+                      const url = 'https://github.com/tonixiang/Shop_myproject';
                       final Uri uri = Uri.parse(url);
                       if (await canLaunchUrl(uri) && context.mounted) {
                         await launchUrl(
@@ -351,9 +353,7 @@ class SettingsPageState extends State<SettingsPage> {
                           mode: LaunchMode.externalApplication,
                         );
                       } else {
-                        ScaffoldMessenger.of(
-                          context,
-                        ).showSnackBar(const SnackBar(content: Text("不能開啟網址")));
+                        MessageService.showMessage(context, '無法打開連結: $url');
                       }
                     },
                   ),
@@ -361,39 +361,7 @@ class SettingsPageState extends State<SettingsPage> {
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // 登出按鈕
-          Card(
-            color: theme.colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '帳戶操作',
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: TextButton.icon(
-                      onPressed: _logout,
-                      icon: const Icon(Icons.logout),
-                      label: const Text('登出'),
-                      style: TextButton.styleFrom(
-                        side: BorderSide(color: theme.colorScheme.error),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );

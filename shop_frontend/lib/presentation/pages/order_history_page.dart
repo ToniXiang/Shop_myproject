@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:shop_frontend/presentation/presentation.dart';
 import 'package:shop_frontend/data/data.dart';
 import 'package:intl/intl.dart';
+import 'package:shop_frontend/core/core.dart';
 
 class OrderHistoryPage extends StatefulWidget {
   const OrderHistoryPage({super.key});
@@ -27,7 +28,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       throw Exception('未登入');
     }
 
-    final url = Uri.parse('http://127.0.0.1:8000/api/orders');
+    final url = Uri.parse('${ApiConstants.baseUrl}/api/orders');
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
@@ -117,7 +118,7 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
           }
 
           final response = await http.delete(
-            Uri.parse('http://127.0.0.1:8000/api/orders/$orderId/cancel/'),
+            Uri.parse('${ApiConstants.baseUrl}/api/orders/$orderId/cancel/'),
             headers: {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $accessToken',
@@ -221,6 +222,10 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                           _ordersFuture = fetchOrders();
                         });
                       },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        foregroundColor: Colors.white,
+                      ),
                       child: const Text('重新載入'),
                     ),
                   ],
@@ -349,10 +354,9 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
                                 showCancelDialog(context, orderId);
                               },
                               style: ElevatedButton.styleFrom(
-                                side: BorderSide(
-                                  color: theme.colorScheme.primary,
+                                backgroundColor: Colors.redAccent,
+                                foregroundColor: Colors.white
                                 ),
-                              ),
                               child: const Text("取消訂單"),
                             ),
                             Text(

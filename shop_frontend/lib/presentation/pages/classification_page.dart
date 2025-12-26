@@ -80,7 +80,7 @@ class ClassificationPageState extends State<ClassificationPage> {
           title: Row(
             children: [
               const Icon(Icons.receipt_long, size: 24),
-              Text("訂單明細", style: theme.textTheme.titleLarge),
+              Text("訂單明細", style: TextStyle(fontSize: 20, color: theme.colorScheme.onSurface)),
             ],
           ),
           shape: RoundedRectangleBorder(
@@ -113,7 +113,8 @@ class ClassificationPageState extends State<ClassificationPage> {
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
-                    side: BorderSide(color: theme.colorScheme.primary),
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
                   ),
                   child: const Text("送出"),
                 ),
@@ -182,19 +183,18 @@ class DownOperations extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
         ElevatedButton(
           onPressed: onPlaceOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.blueAccent),
-          child: Text("提交訂單", style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
+          child: Text("提交訂單", style: TextStyle(color: Colors.white)),
         ),
         ElevatedButton(
           onPressed: onRemoveOrder,
           style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-          child: Text("清除訂單", style: TextStyle(color: theme.colorScheme.onPrimaryContainer)),
+          child: Text("清除訂單", style: TextStyle(color: Colors.white)),
         ),
       ],
     );

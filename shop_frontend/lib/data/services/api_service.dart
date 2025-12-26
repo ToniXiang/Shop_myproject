@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
 import 'package:shop_frontend/core/constants/app_constants.dart';
-
 import 'auth_service.dart';
 
 class ApiService {

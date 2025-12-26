@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
             
             // 應用標題
             Text(
-              "資工購物平台",
+              "scie 購物平台",
               style: TextStyle(
                 color: theme.colorScheme.primary,
                 fontSize: 32,
