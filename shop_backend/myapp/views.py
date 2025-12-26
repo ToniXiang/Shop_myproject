@@ -107,7 +107,6 @@ class UserRegistrationView(APIView):
                 content_type='application/json; charset=utf-8'
             )
 
-
 class UserLoginView(ObtainAuthToken):
     """
     登入 API：使用電子郵件和密碼進行驗證。
@@ -341,6 +340,28 @@ class UserProfileView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content_type='application/json; charset=utf-8'
             )
+
+    def put(self, request):
+        user = request.user
+        new_name = request.data.get('name')
+        if not new_name:
+            return Response(
+                {'message': '缺少新的使用者名稱'},
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type='application/json; charset=utf-8'
+            )
+        if len(new_name.strip()) < 2:
+            return Response(
+                {'error': 'Name must be at least 2 characters'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        user.first_name = new_name
+        user.save()
+        return Response(
+            {'message': '使用者名稱更新成功'},
+            status=status.HTTP_200_OK,
+            content_type='application/json; charset=utf-8'
+        )
 
 
 class SendVerificationCodeView(APIView):

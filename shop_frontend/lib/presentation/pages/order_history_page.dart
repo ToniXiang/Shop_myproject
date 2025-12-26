@@ -86,20 +86,24 @@ class _OrderHistoryPageState extends State<OrderHistoryPage> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('取消訂單確認'),
+          title: const Text('取消訂單確認',style: TextStyle(fontSize: 20)),
           content: Text('您確定要取消訂單 #$orderId 嗎？'),
           actions: <Widget>[
-            TextButton(
-              child: const Text('取消'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: const Text('確認'),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white
+              ),
+              child: const Text('確定取消'),
               onPressed: () {
                 Navigator.of(context).pop();
                 _cancelOrder(orderId);
+              },
+            ),
+            TextButton(
+              child: const Text('不要取消'),
+              onPressed: () {
+                Navigator.of(context).pop();
               },
             ),
           ],

@@ -55,6 +55,15 @@ class AuthService {
           },
           body: body != null ? jsonEncode(body) : null,
         );
+      } else if (method.toUpperCase() == 'PUT') {
+        response = await http.put(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $accessToken',
+          },
+          body: body != null ? jsonEncode(body) : null,
+        );
       } else {
         throw Exception('不支援的 HTTP 方法: $method');
       }
@@ -241,6 +250,15 @@ class AuthService {
     } catch (e) {
       debugPrint('Token validation error: $e');
       return false;
+    }
+  }
+
+  /// 更新用戶信息（部分更新）
+  static Future<void> updateUserInfo(Map<String, dynamic> updates) async {
+    final currentInfo = await getUserInfo();
+    if (currentInfo != null) {
+      final updatedInfo = {...currentInfo, ...updates};
+      await _storage.write(key: _userInfoKey, value: jsonEncode(updatedInfo));
     }
   }
 }

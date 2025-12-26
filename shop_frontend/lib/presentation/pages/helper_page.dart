@@ -8,8 +8,10 @@ class HelperPage extends StatelessWidget {
     final theme = Theme.of(context);
 
     final faqs = [
-      {"question": "購買需要付費嗎？", "answer": "模擬不會實際扣款。"},
-      {"question": "功能不齊全？", "answer": "自己想需求和設計前後端程式需要很多時間。"},
+      {"question": "購買需要付費嗎？", "answer": "模擬不會實際扣款"},
+      {"question": "功能不齊全？", "answer": "目前僅實作部分功能"},
+      {"question": "如何聯絡開發者？", "answer": "請透過 GitHub 提交 issue 或 pull request"},
+      {"question":" 為什麼要登入？", "answer": "登入後可以保存購物車和訂單資訊"},
     ];
 
     return Scaffold(

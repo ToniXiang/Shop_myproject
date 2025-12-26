@@ -17,6 +17,14 @@ class ApiService {
     return await AuthService.authenticatedRequest('POST', endpoint, body: body);
   }
 
+  /// 帶有自動身份驗證的 PUT 請求
+  static Future<Map<String, dynamic>> authenticatedPutRequest(
+    String endpoint,
+    Map<String, dynamic> body,
+  ) async {
+    return await AuthService.authenticatedRequest('PUT', endpoint, body: body);
+  }
+
   /// Sends a GET request to the specified endpoint.
   static Future<dynamic> getRequest(String endpoint, {String? token}) async {
     final url = Uri.parse('${ApiConstants.baseUrl}$endpoint');

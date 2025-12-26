@@ -22,6 +22,7 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 urlpatterns = [
     path('api/orders/', OrderManagementView.as_view(), name='orders'),
     path('api/user/info', UserProfileView.as_view(), name='user_info'),
+    path('api/user/update_name/', UserProfileView.as_view(), name='update_username'),
     path('api/register/', UserRegistrationView.as_view(), name='register'),
     path('api/login/', UserLoginView.as_view(), name='login'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

@@ -14,10 +14,83 @@ class SettingsPageState extends State<SettingsPage> {
   final passwordController = TextEditingController();
   final verificationPasswordController = TextEditingController();
   final verificationCodeController = TextEditingController();
+  final newNameController = TextEditingController();
   Map<String, dynamic>? userInfo;
   bool isLoading = true;
   String username = 'user';
   String email = 'user@example.com';
+
+  Future<void> updateUsername() async {
+    final newName = newNameController.text.trim();
+
+    if (newName.isEmpty) {
+      MessageService.showMessage(context, '名稱不能為空');
+      return;
+    }
+
+    try {
+      final responseData = await ApiService.authenticatedPutRequest(
+        'api/user/update_name/',
+        {'name': newName},
+      );
+      if (!mounted) return;
+
+      // 更新本地狀態
+      setState(() {
+        username = newName;
+        if (userInfo != null) {
+          userInfo!['username'] = newName;
+        }
+      });
+
+      // 更新存儲的用戶信息
+      await AuthService.updateUserInfo({'username': newName});
+      if (!mounted) return;
+      MessageService.showMessage(context, responseData['message'] ?? '名稱更新成功');
+      newNameController.clear();
+      Navigator.pop(context); // 關閉對話框
+    } catch (e) {
+      if (!mounted) return;
+      MessageService.showMessage(context, '更新名稱失敗: $e');
+    }
+  }
+
+  void _showUpdateNameDialog() {
+    newNameController.text = username;
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text('更換使用者名稱',style: TextStyle(fontSize: 20)),
+            content: TextField(
+              controller: newNameController,
+              decoration: const InputDecoration(
+                labelText: '新名稱',
+                hintText: '輸入新的使用者名稱',
+                border: OutlineInputBorder(),
+              ),
+              autofocus: true,
+            ),
+            actions: [
+              ElevatedButton(
+                onPressed: updateUsername,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text('確認'),
+              ),
+              TextButton(
+                onPressed: () {
+                  newNameController.clear();
+                  Navigator.pop(context);
+                },
+                child: const Text('取消'),
+              ),
+            ],
+          ),
+    );
+  }
 
   Future<void> getVerificationCode() async {
     try {
@@ -145,9 +218,22 @@ class SettingsPageState extends State<SettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    '用戶資訊',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '用戶資訊',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        tooltip: '編輯名稱',
+                        onPressed: _showUpdateNameDialog,
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   if (userInfo != null) ...[
