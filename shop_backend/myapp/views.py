@@ -1,37 +1,22 @@
-"""
-Definition of views.
-"""
-
-# Django imports
-from django.contrib.auth.models import User 
+from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, DatabaseError
-
-# Django REST Framework imports
 from rest_framework import status
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.exceptions import ValidationError as DRFValidationError
-
-# JWT imports
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
-
-# Local imports
 from .models import Product, Order
 from .serializers import ProductSerializer, OrderSerializer, CreateOrderSerializer, CustomAuthTokenSerializer
-
-# Python standard library
-import random
-import logging
+import secrets
 from typing import cast, Dict, Any
 
-# Set up logging
-logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 class UserRegistrationView(APIView):
@@ -43,7 +28,6 @@ class UserRegistrationView(APIView):
     def post(self, request):
         self.check_permissions(request)
 
-        username = request.data.get('username')
         email = request.data.get('email')
         password = request.data.get('password')
         verification_code = request.data.get('verification_code')
@@ -57,14 +41,15 @@ class UserRegistrationView(APIView):
             )
 
         # 檢查密碼強度(至少8個字元，包含字母和數字)
-        if password and (len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password)):
+        if password and (
+                len(password) < 8 or not any(c.isalpha() for c in password) or not any(c.isdigit() for c in password)):
             return Response(
                 {'message': '密碼強度不足，請至少包含8個字元，並包含字母和數字'},
                 status=status.HTTP_400_BAD_REQUEST,
                 content_type='application/json; charset=utf-8'
             )
 
-        if not username or not email or not password or not verification_code:
+        if not email or not password or not verification_code:
             return Response(
                 {'message': '需要完整郵件、名稱、密碼與驗證碼'},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -78,15 +63,8 @@ class UserRegistrationView(APIView):
                 content_type='application/json; charset=utf-8'
             )
 
-        if User.objects.filter(username=username).exists():
-            return Response(
-                {'message': '使用者名稱重複'},
-                status=status.HTTP_400_BAD_REQUEST,
-                content_type='application/json; charset=utf-8'
-            )
-
         try:
-            User.objects.create_user(email=email, username=username, password=password)
+            User.objects.create_user(email=email, password=password, first_name=email.split('@')[0])
             return Response(
                 {'message': '註冊成功'},
                 status=status.HTTP_201_CREATED,
@@ -106,6 +84,7 @@ class UserRegistrationView(APIView):
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content_type='application/json; charset=utf-8'
             )
+
 
 class UserLoginView(ObtainAuthToken):
     """
@@ -131,12 +110,13 @@ class UserLoginView(ObtainAuthToken):
         # Create JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
-        
+
         return Response({
             'message': '登入成功',
             'access_token': str(access_token),
             'refresh_token': str(refresh),
-            'username': user.username,
+            'email': user.email,
+            'first_name': user.first_name
         }, status=status.HTTP_200_OK, content_type='application/json; charset=utf-8')
 
 
@@ -316,8 +296,8 @@ class UserProfileView(APIView):
             user = request.user
             if user.is_authenticated:
                 data = {
-                    "username": user.username,
-                    "email": user.email
+                    "first_name": getattr(user, 'first_name', ''),
+                    "email": getattr(user, 'email', '')
                 }
                 return Response(
                     {
@@ -383,7 +363,7 @@ class SendVerificationCodeView(APIView):
 
         try:
             # 生成 6 位數驗證碼
-            verification_code = str(random.randint(100000, 999999))
+            verification_code = f"{secrets.randbelow(1_000_000):06d}"
             cache.set(f'password_reset_{email}', verification_code, timeout=300)  # 5 分鐘有效
 
             # TODO: 用郵件發送驗證碼
@@ -424,7 +404,8 @@ class PasswordResetView(APIView):
             )
 
         # 檢查密碼強度
-        if len(new_password) < 8 or not any(c.isalpha() for c in new_password) or not any(c.isdigit() for c in new_password):
+        if len(new_password) < 8 or not any(c.isalpha() for c in new_password) or not any(
+                c.isdigit() for c in new_password):
             return Response(
                 {'message': '密碼強度不足，請至少包含8個字元，並包含字母和數字'},
                 status=status.HTTP_400_BAD_REQUEST,

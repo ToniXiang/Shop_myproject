@@ -60,7 +60,13 @@ class MessageService {
     final text = _sanitizeMessage(message);
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(text, style: TextStyle(color: Colors.white)),
+        content: Row(
+          children: [
+            Icon(Icons.info, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(child: Text(text, style: TextStyle(color: Colors.white))),
+          ],
+        ),
         backgroundColor: Colors.black87,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),

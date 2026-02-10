@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import Product,Order,OrderItem
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -32,7 +31,7 @@ class CreateOrderSerializer(serializers.Serializer):
     )
     def create(self, validated_data):
         products_data = validated_data.pop('products')
-        user = self.context['request'].user;
+        user = self.context['request'].user
         order = Order.objects.create(user=user)
         for product_data in products_data:
             OrderItem.objects.create(
@@ -49,7 +48,8 @@ class CustomAuthTokenSerializer(serializers.Serializer):
     def validate(self, attrs):
         email = attrs.get('email')
         password = attrs.get('password')
-        user = authenticate(email=email, password=password)
+        # For custom user with USERNAME_FIELD=email, authenticate expects username parameter
+        user = authenticate(username=email, password=password)
         if not user:
             raise serializers.ValidationError('無效的電子郵件或密碼')
         attrs['user'] = user

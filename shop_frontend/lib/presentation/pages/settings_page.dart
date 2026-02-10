@@ -39,12 +39,12 @@ class SettingsPageState extends State<SettingsPage> {
       setState(() {
         username = newName;
         if (userInfo != null) {
-          userInfo!['username'] = newName;
+          userInfo!['first_name'] = newName;
         }
       });
 
       // 更新存儲的用戶信息
-      await AuthService.updateUserInfo({'username': newName});
+      await AuthService.updateUserInfo({'first_name': newName});
       if (!mounted) return;
       MessageService.showMessage(context, responseData['message'] ?? '名稱更新成功');
       newNameController.clear();
@@ -136,7 +136,7 @@ class SettingsPageState extends State<SettingsPage> {
       setState(() {
         userInfo = info;
         if (info != null) {
-          username = info['username'] ?? 'user';
+          username = info['first_name'] ?? 'user';
           email = info['email'] ?? 'user@example.com';
         }
         isLoading = false;
@@ -150,36 +150,7 @@ class SettingsPageState extends State<SettingsPage> {
       }
     }
   }
-
-  Future<void> _refreshToken() async {
-    try {
-      setState(() {
-        isLoading = true;
-      });
-
-      final success = await AuthService.refreshToken();
-
-      setState(() {
-        isLoading = false;
-      });
-
-      if (mounted) {
-        if (success) {
-          MessageService.showMessage(context, 'Token 刷新成功');
-        } else {
-          MessageService.showMessage(context, 'Token 刷新失敗');
-        }
-      }
-    } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
-      if (mounted) {
-        MessageService.showMessage(context, 'Token 刷新錯誤: $e');
-      }
-    }
-  }
-
+  
   @override
   void initState() {
     super.initState();
@@ -229,7 +200,7 @@ class SettingsPageState extends State<SettingsPage> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.edit),
+                        icon: const Icon(Icons.tune),
                         tooltip: '編輯名稱',
                         onPressed: _showUpdateNameDialog,
                       ),
@@ -237,50 +208,12 @@ class SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 16),
                   if (userInfo != null) ...[
-                    _buildInfoRow('用戶名稱', userInfo!['username'] ?? '未知'),
+                    _buildInfoRow('用戶名稱', userInfo!['first_name'] ?? '未知'),
                     _buildInfoRow('電子郵件', userInfo!['email'] ?? '未知'),
                     if (userInfo!.containsKey('user_id'))
                       _buildInfoRow('用戶 ID', userInfo!['user_id'].toString()),
                   ] else
                     const Text('無法載入用戶資訊'),
-                ],
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 16),
-
-          // Token 管理區域
-          Card(
-            color: theme.colorScheme.surface,
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Token 管理',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: _refreshToken,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        foregroundColor: Colors.white,
-                      ),
-                      child: const Text('手動刷新 Token'),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '系統會自動刷新 access token，但您也可以手動刷新',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: .6),
-                    ),
-                  ),
                 ],
               ),
             ),

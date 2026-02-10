@@ -32,14 +32,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           foregroundColor: theme.colorScheme.onSurface,
           elevation: 0,
           centerTitle: false,
-          title: Text(
-            'scie 購物平台',
-            style: TextStyle(
-              color: theme.colorScheme.onSurface,
-              fontSize: 18,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
           actions: [
             IconButton(
               tooltip: '搜尋',

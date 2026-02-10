@@ -30,11 +30,11 @@ class _LoginPageState extends State<LoginPage> {
           responseData.containsKey('refresh_token')) {
         String accessToken = responseData['access_token'] ?? "";
         String refreshToken = responseData['refresh_token'] ?? "";
-        String username = responseData['username'] ?? "未知使用者";
+        String firstName = responseData['first_name'] ?? "未知使用者";
 
         // 準備用戶信息
         Map<String, dynamic> userInfo = {
-          'username': username,
+          'first_name': firstName.toString(),
           'email': emailController.text,
           if (responseData.containsKey('user_id'))
             'user_id': responseData['user_id'],
@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
         if (mounted) {
           MessageService.showMessage(
             context,
-            responseData['message'] + "  歡迎：$username",
+            responseData['message'] + "  歡迎：$firstName",
           );
         }
 
@@ -112,7 +112,6 @@ class _LoginPageState extends State<LoginPage> {
       isLoading = true;
       final responseData = await ApiService.postRequest('api/register/', {
         'email': emailController.text,
-        'username': "新用戶",
         'password': passwordController.text,
         'verification_code': codeController.text,
       });

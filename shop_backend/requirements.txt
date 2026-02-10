@@ -1,23 +1,8 @@
-# Django Framework
-Django==5.2.6
-
-# Django REST Framework
+django>=6.0.2
 djangorestframework==3.16.0
-
-# CORS handling for API
 django-cors-headers==4.7.0
-
-# MySQL database adapter (Windows-compatible)
-PyMySQL==1.1.0
+PyMySQL==1.1.2
 cryptography==44.0.0
-
-# Caching (using Django's cache framework)
 django-redis==5.4.0
-
-# For environment variables
-python-decouple==3.8
-
-# For password hashing (included with Django but good to specify)
-bcrypt==4.2.0
-# JWT Authentication
-djangorestframework-simplejwt >= 5.3.0
+djangorestframework-simplejwt==5.5.1
+mysqlclient>=2.2.1

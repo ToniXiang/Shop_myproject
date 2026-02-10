@@ -25,9 +25,6 @@ class HelperPage extends StatelessWidget {
             leading: const Icon(Icons.help_outline),
             title: Text(
               faq["question"]!,
-              style: theme.textTheme.bodyLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
             ),
             children: [
               Padding(
