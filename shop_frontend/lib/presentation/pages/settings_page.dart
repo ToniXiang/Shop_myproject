@@ -96,7 +96,7 @@ class SettingsPageState extends State<SettingsPage> {
     try {
       final response = await ApiService.authenticatedPostRequest(
         'api/send_verification_code/',
-        {'email': email},
+        {'email': email,'purpose': 'password_reset'},
       );
       if (!mounted) return;
       MessageService.showMessage(context, response['message']);

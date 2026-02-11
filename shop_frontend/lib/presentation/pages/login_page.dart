@@ -94,7 +94,7 @@ class _LoginPageState extends State<LoginPage> {
     try {
       final responseData = await ApiService.postRequest(
         'api/send_verification_code/',
-        {'email': emailController.text},
+        {'email': emailController.text,'purpose': 'registration'},
       );
       if (mounted) {
         // 驗證碼僅能從後端取得，為了模擬安全性不會顯示在前端

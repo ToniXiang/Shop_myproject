@@ -4,6 +4,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, DatabaseError
 from rest_framework import status
+import logging
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -17,20 +18,27 @@ import secrets
 from typing import cast, Dict, Any
 
 User = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class UserRegistrationView(APIView):
     """
-    註冊 API：存儲用戶的姓名、密碼、驗證碼和電子郵件。
+    POST api/register/ - 存儲用戶的姓名、密碼、驗證碼和電子郵件
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        self.check_permissions(request)
 
         email = request.data.get('email')
         password = request.data.get('password')
         verification_code = request.data.get('verification_code')
+
+        if not email or not password or not verification_code:
+            return Response(
+                {'message': '缺少必要參數'},
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type='application/json; charset=utf-8'
+            )
 
         # 驗證電子郵件格式
         if email and ('@' not in email or '.' not in email.split('@')[-1]):
@@ -49,9 +57,18 @@ class UserRegistrationView(APIView):
                 content_type='application/json; charset=utf-8'
             )
 
-        if not email or not password or not verification_code:
+        # 驗證註冊驗證碼
+        cached_code = cache.get(f'registration_{email}')
+        if not cached_code:
             return Response(
-                {'message': '需要完整郵件、名稱、密碼與驗證碼'},
+                {'message': '驗證碼不存在或已過期，請重新發送'},
+                status=status.HTTP_400_BAD_REQUEST,
+                content_type='application/json; charset=utf-8'
+            )
+
+        if cached_code != verification_code:
+            return Response(
+                {'message': '驗證碼錯誤'},
                 status=status.HTTP_400_BAD_REQUEST,
                 content_type='application/json; charset=utf-8'
             )
@@ -65,20 +82,21 @@ class UserRegistrationView(APIView):
 
         try:
             User.objects.create_user(email=email, password=password, first_name=email.split('@')[0])
+            cache.delete(f'registration_{email}')
             return Response(
                 {'message': '註冊成功'},
                 status=status.HTTP_201_CREATED,
                 content_type='application/json; charset=utf-8'
             )
         except IntegrityError as e:
-            print(f"User registration integrity error: {str(e)}")
+            logger.error(f"User registration integrity error: {str(e)}")
             return Response(
                 {'message': '註冊失敗，用戶資料衝突'},
                 status=status.HTTP_400_BAD_REQUEST,
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"User registration database error: {str(e)}")
+            logger.error(f"User registration database error: {str(e)}")
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -88,13 +106,11 @@ class UserRegistrationView(APIView):
 
 class UserLoginView(ObtainAuthToken):
     """
-    登入 API：使用電子郵件和密碼進行驗證。
+    POST api/login/ - 使用電子郵件和密碼進行驗證
     """
     permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
-        self.check_permissions(request)
-
         serializer = CustomAuthTokenSerializer(data=request.data, context={'request': request})
         if not serializer.is_valid():
             return Response(
@@ -103,11 +119,8 @@ class UserLoginView(ObtainAuthToken):
                 content_type='application/json; charset=utf-8'
             )
 
-        # At this point, we know validation passed and user exists
         validated_data = cast(Dict[str, Any], serializer.validated_data)
         user = validated_data['user']
-
-        # Create JWT tokens
         refresh = RefreshToken.for_user(user)
         access_token = refresh.access_token
 
@@ -122,12 +135,11 @@ class UserLoginView(ObtainAuthToken):
 
 class ProductListView(APIView):
     """
-    商品 API：獲取商品列表。
+    GET api/products/ - 獲取商品列表
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        self.check_permissions(request)
 
         try:
             products = Product.objects.all()
@@ -141,7 +153,7 @@ class ProductListView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"Product list database error: {str(e)}")
+            logger.error(f"Product list database error: {str(e)}")
             return Response(
                 {
                     "message": "資料庫錯誤，請稍後再試",
@@ -150,7 +162,7 @@ class ProductListView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DRFValidationError as e:
-            print(f"Product list serialization error: {str(e)}")
+            logger.error(f"Product list serialization error: {str(e)}")
             return Response(
                 {
                     "message": "資料序列化錯誤",
@@ -162,13 +174,14 @@ class ProductListView(APIView):
 
 class OrderManagementView(APIView):
     """
-    訂單 API：傳出訂單列表、傳入訂單。
+    GET api/orders/ - 獲取用戶的訂單列表
+    POST api/orders/ - 建立新訂單，需提供商品 ID 和數量
+    DELETE api/orders/<int:order_id>/cancel/ - 取消訂單
     """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        self.check_permissions(request)
 
         try:
             orders = Order.objects.filter(user=request.user)
@@ -182,14 +195,14 @@ class OrderManagementView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"Order list database error: {str(e)}")
+            logger.error(f"Order list database error: {str(e)}")
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content_type='application/json; charset=utf-8'
             )
         except DRFValidationError as e:
-            print(f"Order list serialization error: {str(e)}")
+            logger.error(f"Order list serialization error: {str(e)}")
             return Response(
                 {'message': '資料序列化錯誤'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -197,7 +210,6 @@ class OrderManagementView(APIView):
             )
 
     def post(self, request):
-        self.check_permissions(request)
 
         if not request.data or not any(request.data.values()):
             return Response(
@@ -229,7 +241,7 @@ class OrderManagementView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except IntegrityError as e:
-            print(f"Order creation integrity error: {str(e)}")
+            logger.error(f"Order creation integrity error: {str(e)}")
             return Response(
                 {
                     "message": "訂單建立失敗，資料衝突",
@@ -238,7 +250,7 @@ class OrderManagementView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"Order creation database error: {str(e)}")
+            logger.error(f"Order creation database error: {str(e)}")
             return Response(
                 {
                     "message": "資料庫錯誤，請稍後再試",
@@ -247,7 +259,7 @@ class OrderManagementView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DRFValidationError as e:
-            print(f"Order creation validation error: {str(e)}")
+            logger.error(f"Order creation validation error: {str(e)}")
             return Response(
                 {
                     "message": "訂單資料驗證失敗",
@@ -257,7 +269,6 @@ class OrderManagementView(APIView):
             )
 
     def delete(self, request, order_id):
-        self.check_permissions(request)
 
         try:
             order = Order.objects.get(id=order_id, user=request.user)
@@ -274,7 +285,7 @@ class OrderManagementView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"Order deletion database error: {str(e)}")
+            logger.error(f"Order deletion database error: {str(e)}")
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -284,13 +295,13 @@ class OrderManagementView(APIView):
 
 class UserProfileView(APIView):
     """
-    使用者 API：傳出用戶名稱與郵件
+    GET api/user/info - 獲取用戶的姓名和電子郵件
+    PUT api/user/update_name/ - 更新用戶的姓名，需提供新的姓名
     """
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        self.check_permissions(request)
 
         try:
             user = request.user
@@ -314,7 +325,7 @@ class UserProfileView(APIView):
                     content_type='application/json; charset=utf-8'
                 )
         except DatabaseError as e:
-            print(f"User profile database error: {str(e)}")
+            logger.error(f"User profile database error: {str(e)}")
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -346,28 +357,32 @@ class UserProfileView(APIView):
 
 class SendVerificationCodeView(APIView):
     """
-    驗證碼 API：發送重設密碼驗證碼到用戶 email(僅測試用，實際專案請使用第三方服務)
+    POST api/send_verification_code/ - 發送驗證碼，需提供電子郵件和用途（registration 或 password_reset）
+    驗證碼為 6 位數字，存儲在緩存中，5 分鐘有效
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        self.check_permissions(request)
 
         email = request.data.get('email')
-        if not email:
+        purpose = request.data.get('purpose')
+
+        if not email or not purpose or purpose not in ['registration', 'password_reset']:
             return Response(
-                {'message': '缺少 email'},
+                {'message': '缺少必要參數或參數值錯誤'},
                 status=status.HTTP_400_BAD_REQUEST,
                 content_type='application/json; charset=utf-8'
             )
 
         try:
-            # 生成 6 位數驗證碼
             verification_code = f"{secrets.randbelow(1_000_000):06d}"
-            cache.set(f'password_reset_{email}', verification_code, timeout=300)  # 5 分鐘有效
+            if (purpose == 'registration'):
+                cache.set(f'registration_{email}', verification_code, timeout=300)  # 5 分鐘有效
+            else:
+                cache.set(f'password_reset_{email}', verification_code, timeout=300)  # 5 分鐘有效
 
             # TODO: 用郵件發送驗證碼
-            print(f'驗證碼發送到 {email}: {verification_code}')
+            print(f'驗證碼發送到 {email}: {verification_code} 用於 {purpose}')
 
             return Response(
                 {'message': '驗證碼已發送'},
@@ -375,7 +390,7 @@ class SendVerificationCodeView(APIView):
                 content_type='application/json; charset=utf-8'
             )
         except DatabaseError as e:
-            print(f"Verification code database error: {str(e)}")
+            logger.error(f"Verification code database error: {str(e)}")
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -385,12 +400,11 @@ class SendVerificationCodeView(APIView):
 
 class PasswordResetView(APIView):
     """
-    重設密碼 API
+    POST api/reset_password/ - 重設密碼，需提供電子郵件、驗證碼和新密碼
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
-        self.check_permissions(request)
 
         email = request.data.get('email')
         code = request.data.get('code')
@@ -424,7 +438,7 @@ class PasswordResetView(APIView):
             user = User.objects.get(email=email)
             user.password = make_password(new_password)
             user.save()
-            cache.delete(f'password_reset_{email}')  # 刪除驗證碼
+            cache.delete(f'password_reset_{email}')
             return Response(
                 {'message': '密碼重設成功'},
                 status=status.HTTP_200_OK,
@@ -436,13 +450,13 @@ class PasswordResetView(APIView):
                 status=status.HTTP_404_NOT_FOUND,
                 content_type='application/json; charset=utf-8'
             )
-        except DatabaseError as e:
+        except DatabaseError:
             return Response(
                 {'message': '資料庫錯誤，請稍後再試'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 content_type='application/json; charset=utf-8'
             )
-        except ValidationError as e:
+        except ValidationError:
             return Response(
                 {'message': '密碼格式不正確'},
                 status=status.HTTP_400_BAD_REQUEST,
